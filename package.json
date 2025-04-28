@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "NODE_ENV=development vite build --watch",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "prettier . --write && eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
+    "daisyui": "^5.0.28",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.1.4"
