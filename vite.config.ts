@@ -19,6 +19,10 @@ export default defineConfig({
           dest: "./",
         },
         {
+          src: resolve(__dirname, "test_text.json"),
+          dest: "./",
+        },
+        {
           src: resolve(__dirname, "public/icons/*"),
           dest: "./icons",
         },

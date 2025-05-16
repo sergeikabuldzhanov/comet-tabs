@@ -10,9 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.5.1",
+    "@mozilla/readability": "^0.6.0",
     "daisyui": "^5.0.28",
+    "main-thread-scheduling": "^14.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "stats.js": "^0.17.0",
     "tailwindcss": "^4.1.4",
     "zustand": "^5.0.3"
   },
@@ -24,6 +28,7 @@
     "@types/node": "^22.15.2",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "@types/stats.js": "^0.17.4",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",

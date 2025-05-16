@@ -1,35 +1,38 @@
-// Content script for Comet Tab Manager
-// This script runs in the context of web pages
+import { Readability } from "@mozilla/readability";
 
 // Extract page content and metadata for analysis
 function extractPageContent() {
-  // Basic metadata extraction
+  // Clone the document to avoid modifying the live page
+  const documentClone = document.cloneNode(true) as Document;
+  const reader = new Readability(documentClone);
+  const article = reader.parse();
+
+  // Basic metadata extraction (keep this as it might be useful)
   const metadata = {
-    title: document.title,
+    title: document.title || article?.title || "", // Use Readability title as fallback
     url: window.location.href,
     domain: window.location.hostname,
-    headings: Array.from(document.querySelectorAll("h1, h2, h3"))
-      .map((h) => h.textContent)
-      .filter(Boolean),
-    metaDescription:
-      document
-        .querySelector('meta[name="description"]')
-        ?.getAttribute("content") || "",
-    metaKeywords:
-      document
-        .querySelector('meta[name="keywords"]')
-        ?.getAttribute("content") || "",
+    // Add excerpt from Readability
+    excerpt: article?.excerpt,
   };
 
-  // Extract main content (simplified version)
-  const bodyText = document.body.innerText.substring(0, 10000); // Limit to 10K chars
+  // Extracted main content text
+  // Use article.textContent which contains the main readable content
+  let mainContent = article?.textContent || ""; // Use empty string if parsing failed
+
+  // Normalize whitespace: replace multiple whitespace chars with single space, then trim
+  mainContent = mainContent.replace(/\s+/g, " ").trim();
+
+  // Limit content length to avoid excessive data transfer/storage
+  const maxContentLength = 10000;
+  const truncatedContent = mainContent.substring(0, maxContentLength);
 
   // Send back to the extension
   chrome.runtime.sendMessage({
-    type: "PAGE_CONTENT",
+    type: "EXTRACTED_CONTENT",
     data: {
       metadata,
-      content: bodyText,
+      content: truncatedContent,
       timestamp: Date.now(),
     },
   });
@@ -37,19 +40,21 @@ function extractPageContent() {
 
 // Run content extraction when page is fully loaded
 if (document.readyState === "complete") {
-  extractPageContent();
+  setTimeout(extractPageContent, 500); // Timeout for dynamic content
 } else {
-  window.addEventListener("load", extractPageContent);
+  window.addEventListener("load", () => setTimeout(extractPageContent, 500));
 }
 
 // Listen for messages from the extension
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type === "EXTRACT_CONTENT") {
-    extractPageContent();
+  if (message.type === "REQUEST_CONTENT_EXTRACTION") {
+    console.log("Content extraction requested by background script.");
+    setTimeout(extractPageContent, 500);
     sendResponse({ success: true });
     return true;
   }
+
   return false;
 });
 
-console.log("Comet Tab Manager content script loaded");
+console.log("Comet Tab Manager content script loaded.");

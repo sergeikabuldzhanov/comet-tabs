@@ -1,6 +1,33 @@
 @import "tailwindcss";
-@plugin "daisyui";
-@plugin "@tailwindcss/typography";
 
 /* Chrome Group Colors */
 @source inline("{hover:,}{bg,divide}-{base,blue,red,yellow,green,pink,purple,cyan,orange}-{50,{100..900..100},950}");
+
+html,
+body {
+  height: auto;
+  max-height: calc(100vh - 50px);
+  min-height: fit-content;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+*,
+*:hover {
+  scrollbar-color: auto;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8297bc;
+  border-radius: 8px;
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: oklch(26.9% 0 0);
+}

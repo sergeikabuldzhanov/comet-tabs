@@ -23,6 +23,9 @@
     "service_worker": "background/background.js",
     "type": "module"
   },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -34,5 +37,28 @@
       "resources": ["assets/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "commands": {
+    "trigger-indexing": {
+      "suggested_key": {
+        "default": "Ctrl+I",
+        "mac": "Command+I"
+      },
+      "description": "Trigger indexing of all tabs"
+    },
+    "clear-indexeddb": {
+      "suggested_key": {
+        "default": "Ctrl+Q",
+        "mac": "Command+Q"
+      },
+      "description": "Clear all entries from IndexedDB"
+    },
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+A",
+        "mac": "Alt+A"
+      },
+      "description": "Open Comet Tab Manager popup"
+    }
+  }
 }

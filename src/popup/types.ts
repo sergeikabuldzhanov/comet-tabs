@@ -11,4 +11,5 @@ export interface Tab extends chrome.tabs.Tab {
 
 export interface TabGroup extends chrome.tabGroups.TabGroup {
   tabs: Tab[];
+  titleComponent?: React.ReactNode;
 }
