@@ -7,6 +7,114 @@ import { VirtualizedTab } from "./VirtualizedTab";
 import Stats from "stats.js";
 import { useDebouncedValue } from "./useDebouncedValue";
 
+// Scroll-related variables and functions (module scope)
+let isAutoScrolling = false;
+let autoScrollDirection = 1; // 1 for down, -1 for up
+let animationFrameId: number | null = null;
+// This selector targets the div that has the listContainerRef in App.tsx
+const SCROLL_TARGET_SELECTOR = "html";
+
+function autoScrollStep() {
+  const scrollContainer = document.querySelector<HTMLDivElement>(
+    SCROLL_TARGET_SELECTOR,
+  );
+
+  if (!scrollContainer) {
+    console.error(
+      "AutoScroller: Scroll container not found during step. Stopping auto-scroll.",
+    );
+    isAutoScrolling = false;
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    return;
+  }
+
+  const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+
+  // If there's no scrollbar (content fits within viewport), just flip direction.
+  // This handles cases where scrollHeight <= clientHeight.
+  if (scrollHeight <= clientHeight) {
+    autoScrollDirection *= -1; // Flip direction
+    if (isAutoScrolling) {
+      // Continue if still active
+      animationFrameId = requestAnimationFrame(autoScrollStep);
+    }
+    return;
+  }
+
+  let newScrollTop = scrollTop + clientHeight * autoScrollDirection;
+
+  if (autoScrollDirection === 1) {
+    // Scrolling Down
+    // If current scrollTop is already at the bottom, flip direction
+    if (scrollTop >= scrollHeight - clientHeight - 1) {
+      // -1 for potential float precision
+      newScrollTop = scrollHeight - clientHeight;
+      autoScrollDirection = -1;
+    } else if (newScrollTop >= scrollHeight - clientHeight) {
+      // Reached or passed bottom
+      newScrollTop = scrollHeight - clientHeight; // Go to exact bottom
+      autoScrollDirection = -1; // Change to scroll up
+    }
+  } else {
+    // Scrolling Up (autoScrollDirection === -1)
+    // If current scrollTop is already at the top, flip direction
+    if (scrollTop <= 1) {
+      // 1 for potential float precision
+      newScrollTop = 0;
+      autoScrollDirection = 1;
+    } else if (newScrollTop <= 0) {
+      // Reached or passed top
+      newScrollTop = 0; // Go to exact top
+      autoScrollDirection = 1; // Change to scroll down
+    }
+  }
+
+  scrollContainer.scrollTop = newScrollTop;
+
+  if (isAutoScrolling) {
+    // Continue if still active
+    animationFrameId = requestAnimationFrame(autoScrollStep);
+  }
+}
+
+function toggleAutoScroll() {
+  isAutoScrolling = !isAutoScrolling;
+  if (isAutoScrolling) {
+    const scrollContainer = document.querySelector<HTMLDivElement>(
+      SCROLL_TARGET_SELECTOR,
+    );
+    if (!scrollContainer) {
+      console.error(
+        "AutoScroller: Scroll container not found. Cannot start auto-scroll.",
+      );
+      isAutoScrolling = false; // Revert state
+      return;
+    }
+    if (animationFrameId === null) {
+      animationFrameId = requestAnimationFrame(autoScrollStep);
+    }
+  } else {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+}
+
+function setupAutoScrollListener() {
+  document.body.addEventListener("keydown", (event) => {
+    if (event.altKey && (event.key === "w" || event.key === "W")) {
+      console.log("toggleAutoScroll");
+      event.preventDefault();
+      toggleAutoScroll();
+    }
+  });
+  console.log("Auto-scroll hotkey (Alt+W) listener initialized.");
+}
+
 function App() {
   const {
     fetchTabs,
@@ -190,5 +298,6 @@ const setupFPS = () => {
   window.requestAnimationFrame(animate);
 };
 setupFPS();
+setupAutoScrollListener(); // Initialize the auto-scroll listener
 
 export default App;
