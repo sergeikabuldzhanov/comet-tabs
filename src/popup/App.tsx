@@ -12,11 +12,13 @@ let isAutoScrolling = false;
 let autoScrollDirection = 1; // 1 for down, -1 for up
 let animationFrameId: number | null = null;
 // This selector targets the div that has the listContainerRef in App.tsx
-const SCROLL_TARGET_SELECTOR = "html";
+const SCROLL_TARGET_ID = "auto-scroll-container";
+
+export const ITEM_HEIGHT = 44;
 
 function autoScrollStep() {
   const scrollContainer = document.querySelector<HTMLDivElement>(
-    SCROLL_TARGET_SELECTOR,
+    `#${SCROLL_TARGET_ID}`,
   );
 
   if (!scrollContainer) {
@@ -84,7 +86,7 @@ function toggleAutoScroll() {
   isAutoScrolling = !isAutoScrolling;
   if (isAutoScrolling) {
     const scrollContainer = document.querySelector<HTMLDivElement>(
-      SCROLL_TARGET_SELECTOR,
+      `#${SCROLL_TARGET_ID}`,
     );
     if (!scrollContainer) {
       console.error(
@@ -112,6 +114,7 @@ function setupAutoScrollListener() {
       toggleAutoScroll();
     }
   });
+
   console.log("Auto-scroll hotkey (Alt+W) listener initialized.");
 }
 
@@ -131,8 +134,7 @@ function App() {
   const listContainerRef = useRef<HTMLDivElement>(null);
   const virtualListInstanceRef = useRef<VirtualizedTabList | null>(null);
 
-  const ITEM_HEIGHT = 44;
-  const DEBOUNCE_DELAY = 150;
+  const DEBOUNCE_DELAY = 100;
 
   const hasKeywordMatches = searchQuery && searchResults.length > 0;
   const hasSemanticMatches = searchQuery && semanticSearchResults.length > 0;
@@ -240,7 +242,7 @@ function App() {
   }, []);
 
   return (
-    <div className="flex h-full w-full min-w-80 flex-col bg-neutral-900 text-white">
+    <div className="flex h-full max-h-[600px] w-full min-w-80 flex-col bg-neutral-900 text-white">
       <div className="sticky top-0 z-10 divide-y-1 divide-neutral-500 bg-inherit">
         <div className="p-4">
           <SearchBar inputValue={searchQuery} onChange={handleSearchChange} />
@@ -259,6 +261,7 @@ function App() {
         ref={listContainerRef}
         className="flex-grow overflow-y-auto"
         style={{ position: "relative" }}
+        id={SCROLL_TARGET_ID}
       >
         {debouncedDisplayTabs.length === 0 && (
           <div className="px-4 py-8 text-center text-neutral-400">

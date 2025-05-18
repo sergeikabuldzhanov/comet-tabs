@@ -1,6 +1,7 @@
 import { Tab } from "./types";
 import { VirtualizedTab as VirtualizedTabInterface } from "./VirtualizedTabList";
 import { getRelativeTimeString } from "./getRelativeTimeString";
+import { ITEM_HEIGHT } from "./App";
 
 const groupColorMap: Record<string, string> = {
   grey: "#D1D5DB", // Tailwind gray-300
@@ -51,9 +52,7 @@ export class VirtualizedTab implements VirtualizedTabInterface {
   }
 
   private _createDOM(): void {
-    this.el.className =
-      "group flex cursor-pointer items-center gap-3 px-3 py-1 hover:bg-neutral-700";
-    this.el.style.height = "44px";
+    this.el.className = `group flex cursor-pointer items-center gap-3 px-3 py-1 hover:bg-neutral-700 absolute top-0 h-[${ITEM_HEIGHT}px] w-full`;
 
     // Favicon Container
     this.faviconContainerEl = document.createElement("div");
@@ -281,11 +280,11 @@ export class VirtualizedTab implements VirtualizedTabInterface {
   }
 
   public setOffset(offsetY: number): void {
-    this.el.style.position = "absolute";
-    this.el.style.top = "0";
-    this.el.style.left = "0";
-    this.el.style.width = "100%";
     this.el.style.transform = `translateY(${offsetY}px)`;
+  }
+
+  public getId(): number {
+    return this._tabData.id!;
   }
 
   public getElement(): HTMLElement {
