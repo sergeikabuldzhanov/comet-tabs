@@ -5,6 +5,7 @@ export interface VirtualizedTab {
   update(tabData: Tab, query?: string): void;
   setOffset(offsetY: number): void;
   destroy(): void;
+  getId(): number;
 }
 
 export interface VirtualizedTabConstructor {
@@ -37,9 +38,7 @@ export class VirtualizedTabList {
   private scrollTop: number;
   private sizerEl: HTMLElement; // Used to maintain the correct scrollbar size.
 
-  private visibleTabs: Map<number, VirtualizedTab>;
-  // Add tabs that are out of view so they can be reused.
-  private reusableTabs: VirtualizedTab[];
+  private renderedTabs: Record<number, VirtualizedTab>;
 
   private visibleStartIndex: number; // Index of the first tab to render.
   private visibleEndIndex: number; // Index of the tab after the last one to render.
@@ -70,8 +69,7 @@ export class VirtualizedTabList {
     this.sizerEl.style.opacity = "0"; // Invisible.
     this.container.appendChild(this.sizerEl);
 
-    this.visibleTabs = new Map();
-    this.reusableTabs = [];
+    this.renderedTabs = {};
 
     this.visibleStartIndex = 0;
     this.visibleEndIndex = 0;
@@ -111,70 +109,55 @@ export class VirtualizedTabList {
   }
 
   public renderVisibleItems(): void {
-    const itemsThatShouldBeVisible = new Set<number>();
+    const renderTabs: Record<number, true> = {};
+    const tabs = this.tabsData;
+
     for (let i = this.visibleStartIndex; i < this.visibleEndIndex; i++) {
       const tab = this.tabsData[i];
-      if (tab && typeof tab.id === "number")
-        itemsThatShouldBeVisible.add(tab.id);
+      renderTabs[tab.id!] = true;
     }
+    console.log(renderTabs);
 
     // Identify tabs to remove/recycle
     const tabsToRecycle: VirtualizedTab[] = [];
-    this.visibleTabs.forEach((tab, tabId) => {
-      if (!itemsThatShouldBeVisible.has(tabId)) tabsToRecycle.push(tab);
-    });
+    for (const tabId in this.renderedTabs) {
+      if (tabId in renderTabs) continue;
+      const tabComponent = this.renderedTabs[tabId];
+      tabsToRecycle.push(tabComponent);
+    }
 
+    for (let i = this.visibleStartIndex; i < this.visibleEndIndex; i++) {
+      const tab = tabs[i];
+
+      const existingTab = this.renderedTabs[tab.id!];
+      const offset = i * this.itemHeight;
+      if (existingTab) {
+        existingTab.setOffset(offset);
+        continue;
+      }
+      const reuseTab = tabsToRecycle.pop();
+      if (reuseTab) {
+        delete this.renderedTabs[reuseTab.getId()];
+        reuseTab.setOffset(offset);
+        this.renderedTabs[tab.id!] = reuseTab;
+        reuseTab.update(tab, this.currentQuery);
+        continue;
+      }
+      const newTab = new this.ItemtabClass(tabs[i], {
+        query: this.currentQuery,
+        onSelectCb: this.onSelectTabCb,
+        onCloseCb: this.onCloseTabCb,
+      });
+      newTab.setOffset(offset);
+      this.renderedTabs[tab.id!] = newTab;
+      this.container.appendChild(newTab.getElement());
+    }
     for (const tab of tabsToRecycle) {
-      // Find the tabId associated with this tab instance before deleting
-      let associatedTabId: number | undefined;
-      for (const [id, r] of this.visibleTabs.entries()) {
-        if (r === tab) {
-          associatedTabId = id;
-          break;
-        }
-      }
-      if (associatedTabId !== undefined) {
-        this.visibleTabs.delete(associatedTabId);
-      }
-
       if (tab.getElement().parentNode === this.container) {
         this.container.removeChild(tab.getElement());
       }
-      this.reusableTabs.push(tab);
-    }
-
-    // Render/update visible items
-    for (let i = this.visibleStartIndex; i < this.visibleEndIndex; i++) {
-      const tabData = this.tabsData[i];
-      if (!tabData || typeof tabData.id !== "number") {
-        continue;
-      }
-
-      const itemTopPosition = i * this.itemHeight;
-      let tab = this.visibleTabs.get(tabData.id);
-
-      if (tab) {
-        // Already visible, update its data (for query highlighting) and position
-        tab.update(tabData, this.currentQuery);
-        tab.setOffset(itemTopPosition);
-      } else {
-        // New item to display, try to reuse or create
-        tab = this.reusableTabs.pop();
-        if (tab) {
-          tab.update(tabData, this.currentQuery);
-          this.container.appendChild(tab.getElement()); // Re-attach
-          tab.setOffset(itemTopPosition);
-        } else {
-          tab = new this.ItemtabClass(tabData, {
-            query: this.currentQuery,
-            onSelectCb: this.onSelectTabCb,
-            onCloseCb: this.onCloseTabCb,
-          });
-          this.container.appendChild(tab.getElement());
-          tab.setOffset(itemTopPosition); // Initial position
-        }
-        this.visibleTabs.set(tabData.id, tab);
-      }
+      tab.destroy();
+      delete this.renderedTabs[tab.getId()];
     }
   }
 
@@ -207,16 +190,13 @@ export class VirtualizedTabList {
   public destroy(): void {
     this.container.removeEventListener("scroll", this._handleScroll);
 
-    this.visibleTabs.forEach((tab) => {
+    for (const tabId in this.renderedTabs) {
+      const tab = this.renderedTabs[tabId];
       if (tab.getElement().parentNode === this.container) {
         this.container.removeChild(tab.getElement());
       }
       tab.destroy();
-    });
-    this.visibleTabs.clear();
-
-    this.reusableTabs.forEach((tab) => tab.destroy());
-    this.reusableTabs = [];
+    }
 
     if (this.sizerEl.parentNode === this.container) {
       this.container.removeChild(this.sizerEl);
