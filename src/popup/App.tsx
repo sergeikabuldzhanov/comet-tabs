@@ -128,13 +128,23 @@ function App() {
     : tabs;
 
   const currentQueryForHighlight = hasKeywordMatches ? searchQuery : undefined;
-
   const debouncedDisplayTabs = useDebouncedValue(
     currentDisplayTabs,
     DEBOUNCE_DELAY,
   );
   const debouncedQueryForHighlight = useDebouncedValue(
     currentQueryForHighlight,
+    DEBOUNCE_DELAY,
+  );
+
+  const debouncedItemCount = useDebouncedValue(
+    searchQuery
+      ? hasKeywordMatches
+        ? `${debouncedDisplayTabs.length} Keyword Matches`
+        : hasSemanticMatches
+          ? `${debouncedDisplayTabs.length} Semantic Matches`
+          : "No Matches"
+      : `${tabs.length} Open Tabs`,
     DEBOUNCE_DELAY,
   );
 
@@ -148,7 +158,6 @@ function App() {
   );
 
   useEffect(() => {
-    console.log("useEffect");
     fetchTabs();
 
     const tabUpdateListener = () => {
@@ -228,13 +237,7 @@ function App() {
           <SearchBar inputValue={searchQuery} onChange={handleSearchChange} />
         </div>
         <div className="p-4 font-semibold text-neutral-400">
-          {searchQuery
-            ? hasKeywordMatches
-              ? `${debouncedDisplayTabs.length} Keyword Matches`
-              : hasSemanticMatches
-                ? `${debouncedDisplayTabs.length} Semantic Matches`
-                : "No Matches"
-            : `${tabs.length} Open Tabs`}
+          {debouncedItemCount}
         </div>
       </div>
       <div

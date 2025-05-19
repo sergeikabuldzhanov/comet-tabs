@@ -132,6 +132,7 @@ export class VirtualizedTabList {
       const offset = i * this.itemHeight;
       if (existingTab) {
         existingTab.setOffset(offset);
+        existingTab.update(tab, this.currentQuery);
         continue;
       }
       const reuseTab = tabsToRecycle.pop();
