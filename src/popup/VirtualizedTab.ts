@@ -37,6 +37,7 @@ export class VirtualizedTab implements VirtualizedTabInterface {
   private relativeTimeEl!: HTMLElement;
   private groupIndicatorSvg?: SVGElement;
   private groupIndicatorCircle?: SVGCircleElement;
+  private groupIndicatorTitleEl?: SVGTitleElement;
   private closeButtonEl!: HTMLButtonElement;
 
   constructor(initialTabData: Tab, options: VirtualizedTabOptions) {
@@ -53,6 +54,7 @@ export class VirtualizedTab implements VirtualizedTabInterface {
 
   private _createDOM(): void {
     this.el.className = `group flex cursor-pointer items-center gap-3 px-3 py-1 hover:bg-neutral-700 absolute top-0 h-[${ITEM_HEIGHT}px] w-full`;
+    this.el.style.willChange = "transform";
 
     // Favicon Container
     this.faviconContainerEl = document.createElement("div");
@@ -102,6 +104,7 @@ export class VirtualizedTab implements VirtualizedTabInterface {
     this.relativeTimeEl = document.createElement("div");
     this.relativeTimeEl.className =
       "text-[11px] whitespace-nowrap text-neutral-400";
+    this.relativeTimeEl.style.minWidth = "70px";
     secondRowContainer.appendChild(this.relativeTimeEl);
 
     tabInfoContainer.appendChild(secondRowContainer);
@@ -252,26 +255,32 @@ export class VirtualizedTab implements VirtualizedTabInterface {
         this.groupIndicatorCircle.setAttribute("cy", "4");
         this.groupIndicatorCircle.setAttribute("r", "4");
         this.groupIndicatorSvg.appendChild(this.groupIndicatorCircle);
-        // Insert before URL element
+
+        // Create title element once and store it
+        this.groupIndicatorTitleEl = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "title",
+        ) as SVGTitleElement;
+        this.groupIndicatorCircle.appendChild(this.groupIndicatorTitleEl);
+
         secondRowContainer.insertBefore(this.groupIndicatorSvg, this.urlEl);
       }
       const displayGroupColor =
         groupColorMap[this._tabData.groupColor] || this._tabData.groupColor;
       this.groupIndicatorSvg.style.filter = `drop-shadow(0 0 4px ${this._tabData.groupColor || "transparent"})`;
       this.groupIndicatorCircle!.setAttribute("fill", displayGroupColor);
+
       const groupTitle =
         this._tabData.groupName ?? `Group: ${this._tabData.groupColor}`;
       this.groupIndicatorSvg.setAttribute("aria-label", groupTitle);
-      // Clear previous title if any and add new one to circle or svg
-      const existingTitleElement =
-        this.groupIndicatorSvg.querySelector("title");
-      if (existingTitleElement) existingTitleElement.remove();
-      const titleSvg = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "title",
-      );
-      titleSvg.textContent = groupTitle;
-      this.groupIndicatorCircle!.appendChild(titleSvg);
+
+      // Update textContent if it has changed
+      if (
+        this.groupIndicatorTitleEl &&
+        this.groupIndicatorTitleEl.textContent !== groupTitle
+      ) {
+        this.groupIndicatorTitleEl.textContent = groupTitle;
+      }
 
       this.groupIndicatorSvg.style.display = "block";
     } else if (this.groupIndicatorSvg) {

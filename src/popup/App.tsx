@@ -7,7 +7,7 @@ import { VirtualizedTab } from "./VirtualizedTab";
 import Stats from "stats.js";
 import { useDebouncedValue } from "./useDebouncedValue";
 
-// Scroll-related variables and functions (module scope)
+// Scroll-related variables and functions
 let isAutoScrolling = false;
 let autoScrollDirection = 1; // 1 for down, -1 for up
 let animationFrameId: number | null = null;
@@ -35,46 +35,26 @@ function autoScrollStep() {
 
   const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
 
-  // If there's no scrollbar (content fits within viewport), just flip direction.
-  // This handles cases where scrollHeight <= clientHeight.
   if (scrollHeight <= clientHeight) {
     autoScrollDirection *= -1; // Flip direction
     if (isAutoScrolling) {
-      // Continue if still active
       animationFrameId = requestAnimationFrame(autoScrollStep);
     }
     return;
   }
 
-  let newScrollTop = scrollTop + clientHeight * autoScrollDirection;
-
   if (autoScrollDirection === 1) {
-    // Scrolling Down
-    // If current scrollTop is already at the bottom, flip direction
     if (scrollTop >= scrollHeight - clientHeight - 1) {
-      // -1 for potential float precision
-      newScrollTop = scrollHeight - clientHeight;
       autoScrollDirection = -1;
-    } else if (newScrollTop >= scrollHeight - clientHeight) {
-      // Reached or passed bottom
-      newScrollTop = scrollHeight - clientHeight; // Go to exact bottom
-      autoScrollDirection = -1; // Change to scroll up
     }
   } else {
-    // Scrolling Up (autoScrollDirection === -1)
-    // If current scrollTop is already at the top, flip direction
     if (scrollTop <= 1) {
-      // 1 for potential float precision
-      newScrollTop = 0;
       autoScrollDirection = 1;
-    } else if (newScrollTop <= 0) {
-      // Reached or passed top
-      newScrollTop = 0; // Go to exact top
-      autoScrollDirection = 1; // Change to scroll down
     }
   }
 
-  scrollContainer.scrollTop = newScrollTop;
+  const scrollSpeed = 150;
+  scrollContainer.scrollBy(0, autoScrollDirection * scrollSpeed);
 
   if (isAutoScrolling) {
     // Continue if still active

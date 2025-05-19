@@ -116,7 +116,6 @@ export class VirtualizedTabList {
       const tab = this.tabsData[i];
       renderTabs[tab.id!] = true;
     }
-    console.log(renderTabs);
 
     // Identify tabs to remove/recycle
     const tabsToRecycle: VirtualizedTab[] = [];
