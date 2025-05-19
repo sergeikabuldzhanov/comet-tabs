@@ -3,7 +3,7 @@
 Comet Tab Manager is a Chrome extension built as an experiment to explore improvements over the native Chrome tab search and management UI. Main goals were to integrate semantic search and to achieve high performance, especially when dealing with a large number of open tabs.
 
 ## Demo Video
-https://youtu.be/l_sAelF1FRE
+[![Demo](https://img.youtube.com/vi/l_sAelF1FRE/0.jpg)](https://www.youtube.com/watch?v=l_sAelF1FRE)
 
 ## Core Features
 
